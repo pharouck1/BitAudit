@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { parseApiResponse } from '../lib/api';
 
 const BRAND_NAME = 'BitAudit Forensics';
 const DISCLAIMER_KEY = 'reportDisclaimerAccepted';
@@ -120,7 +121,7 @@ function PlatformForm() {
         body: JSON.stringify(formData),
       });
 
-      const data = await response.json();
+      const data = await parseApiResponse(response);
 
       if (!response.ok) {
         throw new Error(data.message || 'Failed to submit report.');
@@ -161,7 +162,7 @@ function PlatformForm() {
         body: JSON.stringify(reviewData),
       });
 
-      const data = await response.json();
+      const data = await parseApiResponse(response);
 
       if (!response.ok) {
         throw new Error(data.message || 'Failed to submit review.');

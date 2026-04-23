@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { parseApiResponse } from '../lib/api';
 
 const ADMIN_KEY_STORAGE = 'adminAccessKey';
 
@@ -27,7 +28,7 @@ function AdminSubmissions() {
           'x-admin-key': adminKey,
         },
       });
-      const data = await response.json();
+      const data = await parseApiResponse(response);
 
       if (!response.ok) {
         throw new Error(data.message || 'Failed to load submissions.');
