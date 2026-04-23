@@ -7,8 +7,13 @@ import nodemailer from 'nodemailer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DATA_FILE = path.join(__dirname, 'data', 'reports.json');
-const REVIEWS_FILE = path.join(__dirname, 'data', 'reviews.json');
+const DATA_DIR = process.env.DATA_DIR
+  ? path.resolve(process.env.DATA_DIR)
+  : process.env.RENDER_DISK_ROOT
+    ? path.join(process.env.RENDER_DISK_ROOT, 'data')
+    : path.join(__dirname, 'data');
+const DATA_FILE = path.join(DATA_DIR, 'reports.json');
+const REVIEWS_FILE = path.join(DATA_DIR, 'reviews.json');
 const PORT = process.env.PORT || 3001;
 const REPORT_TO_EMAIL = process.env.REPORT_TO_EMAIL || 'puzzlemind89@gmail.com';
 const ADMIN_KEY = process.env.ADMIN_KEY || '';
@@ -72,6 +77,17 @@ async function readReviews() {
 
 async function writeReviews(reviews) {
   return writeCollection(REVIEWS_FILE, reviews);
+}
+
+async function getStorageSummary() {
+  const [reports, reviews] = await Promise.all([readReports(), readReviews()]);
+
+  return {
+    dataDirectory: DATA_DIR,
+    reportsCount: reports.length,
+    reviewsCount: reviews.length,
+    persistentDiskConfigured: Boolean(process.env.DATA_DIR || process.env.RENDER_DISK_ROOT),
+  };
 }
 
 function sendJson(res, statusCode, payload) {
@@ -266,16 +282,31 @@ const server = createServer(async (req, res) => {
   }
 
   if (req.method === 'GET' && url.pathname === '/') {
-    sendJson(res, 200, {
-      status: 'ok',
-      message: 'Backend server is running.',
-      endpoints: ['/api/health', '/api/reports', '/api/reviews'],
-    });
+    try {
+      const storage = await getStorageSummary();
+      sendJson(res, 200, {
+        status: 'ok',
+        message: 'Backend server is running.',
+        endpoints: ['/api/health', '/api/reports', '/api/reviews', '/api/admin/submissions'],
+        storage,
+      });
+    } catch (error) {
+      sendJson(res, 500, {
+        status: 'error',
+        message: 'Backend server is running, but storage could not be read.',
+        error: error.message,
+      });
+    }
     return;
   }
 
   if (req.method === 'GET' && url.pathname === '/api/health') {
-    sendJson(res, 200, { status: 'ok' });
+    try {
+      const storage = await getStorageSummary();
+      sendJson(res, 200, { status: 'ok', storage });
+    } catch (error) {
+      sendJson(res, 500, { status: 'error', message: 'Unable to read storage.', error: error.message });
+    }
     return;
   }
 
@@ -402,4 +433,5 @@ const server = createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`Backend server running at http://localhost:${PORT}`);
+  console.log(`Submission data directory: ${DATA_DIR}`);
 });

@@ -8,6 +8,7 @@ import About from './pages/About.jsx';
 import Resources from './pages/Resources.jsx';
 import Contact from './pages/Contact.jsx';
 import PlatformForm from './pages/PlatformForm.jsx';
+import AdminSubmissions from './pages/AdminSubmissions.jsx';
 
 function AppContent() {
   const location = useLocation();
@@ -67,6 +68,7 @@ function AppContent() {
           <Route path="/resources" element={<Resources />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/report" element={<PlatformForm />} />
+          <Route path="/admin/submissions" element={<AdminSubmissions />} />
         </Routes>
       </main>
       <Footer />
