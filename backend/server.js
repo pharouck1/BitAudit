@@ -95,7 +95,7 @@ function sendJson(res, statusCode, payload) {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key',
   });
   res.end(JSON.stringify(payload));
 }
