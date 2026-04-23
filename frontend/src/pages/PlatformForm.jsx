@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { parseApiResponse } from '../lib/api';
+import { buildApiUrl, parseApiResponse } from '../lib/api';
 
 const BRAND_NAME = 'BitAudit Forensics';
 const DISCLAIMER_KEY = 'reportDisclaimerAccepted';
@@ -115,7 +115,7 @@ function PlatformForm() {
     setReportErrorMessage('');
 
     try {
-      const response = await fetch('/api/reports', {
+      const response = await fetch(buildApiUrl('/api/reports'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -156,7 +156,7 @@ function PlatformForm() {
     setReviewErrorMessage('');
 
     try {
-      const response = await fetch('/api/reviews', {
+      const response = await fetch(buildApiUrl('/api/reviews'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(reviewData),

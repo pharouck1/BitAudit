@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { parseApiResponse } from '../lib/api';
+import { buildApiUrl, parseApiResponse } from '../lib/api';
 
 const ADMIN_KEY_STORAGE = 'adminAccessKey';
 
@@ -23,7 +23,7 @@ function AdminSubmissions() {
     setErrorMessage('');
 
     try {
-      const response = await fetch('/api/admin/submissions', {
+      const response = await fetch(buildApiUrl('/api/admin/submissions'), {
         headers: {
           'x-admin-key': adminKey,
         },
