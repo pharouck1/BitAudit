@@ -21,6 +21,7 @@ function AppContent() {
       '/resources': 'Resources',
       '/contact': 'Contact',
       '/report': 'Report Incident',
+      '/admin/submissions': 'Admin Submissions',
     };
 
     const currentPage = pageTitles[location.pathname] || 'Home';

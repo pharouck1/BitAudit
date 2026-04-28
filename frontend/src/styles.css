@@ -321,6 +321,12 @@ button, input, textarea {
   border: 1px solid rgba(149, 160, 174, 0.16);
 }
 
+.button.danger {
+  background: rgba(117, 32, 32, 0.35);
+  color: #ffdada;
+  border: 1px solid rgba(224, 110, 110, 0.3);
+}
+
 .feature-grid,
 .faq-grid,
 .section-content {
@@ -371,6 +377,87 @@ button, input, textarea {
   margin-top: 1.5rem;
   display: grid;
   gap: 0.8rem;
+}
+
+.admin-form,
+.admin-entry-form {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.admin-results {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.admin-section {
+  padding: 1.25rem;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(201, 164, 95, 0.12);
+  background: linear-gradient(180deg, rgba(18, 25, 35, 0.78), rgba(10, 14, 21, 0.88));
+}
+
+.admin-section-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: baseline;
+  margin-bottom: 1rem;
+}
+
+.admin-section-header h2,
+.admin-section-header p {
+  margin: 0;
+}
+
+.admin-section-header p {
+  color: var(--text-dim);
+  font-family: 'IBM Plex Serif', Georgia, serif;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.admin-entry-form label,
+.admin-form label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
+  color: var(--text-main);
+  padding: 0.7rem;
+  border-radius: 0.9rem;
+  background: linear-gradient(180deg, rgba(20, 26, 36, 0.9), rgba(12, 17, 25, 0.92));
+  border: 1px solid rgba(201, 164, 95, 0.12);
+  position: relative;
+  overflow: hidden;
+  font-size: 0.95rem;
+}
+
+.admin-entry-form input,
+.admin-entry-form textarea,
+.admin-form input {
+  border: 1px solid rgba(201, 164, 95, 0.18);
+  border-radius: 0.7rem;
+  padding: 0.65rem 0.75rem;
+  background: rgba(7, 10, 16, 0.9);
+  color: var(--text-main);
+  font-size: 0.95rem;
+}
+
+.admin-entry-form textarea,
+.admin-form textarea {
+  resize: vertical;
+}
+
+.admin-entry-form input:focus,
+.admin-entry-form textarea:focus,
+.admin-form input:focus {
+  outline: 2px solid rgba(213, 176, 106, 0.45);
+  border-color: rgba(213, 176, 106, 0.45);
 }
 
 .disclaimer-overlay {
@@ -619,6 +706,12 @@ button, input, textarea {
   background: linear-gradient(180deg, rgba(20, 26, 36, 0.9), rgba(12, 17, 25, 0.92));
   border-radius: 1rem;
   padding: 1rem;
+}
+
+.admin-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.85rem;
 }
 
 .reports-list p {
