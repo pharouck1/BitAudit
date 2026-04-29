@@ -1,4 +1,6 @@
-require("dotenv").config();
+import 'dotenv/config';
+
+console.log("MONGO:", process.env.MONGODB_URI);
 
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
