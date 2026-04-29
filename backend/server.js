@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
