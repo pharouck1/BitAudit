@@ -685,6 +685,54 @@ button, input, textarea {
   margin-top: 2rem;
 }
 
+.submitted-reviews {
+  margin-top: 2rem;
+}
+
+.review-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.review-card {
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(201, 164, 95, 0.14);
+  background: linear-gradient(180deg, rgba(20, 26, 36, 0.9), rgba(12, 17, 25, 0.92));
+}
+
+.review-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.55rem;
+}
+
+.review-card-header strong {
+  color: #f8c96d;
+  letter-spacing: 0.08em;
+}
+
+.review-card p {
+  margin: 0;
+  color: var(--text-soft);
+  font-family: 'IBM Plex Serif', Georgia, serif;
+}
+
+.review-time {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+.review-empty-state {
+  padding: 1rem 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(201, 164, 95, 0.14);
+  background: rgba(12, 17, 25, 0.92);
+  color: var(--text-soft);
+}
+
 .submitted-reports .button {
   margin-bottom: 1rem;
 }

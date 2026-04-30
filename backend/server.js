@@ -1,16 +1,17 @@
-import 'dotenv/config';
-
-console.log("MONGO:", process.env.MONGODB_URI);
-
 import { createServer } from 'node:http';
+import { randomUUID } from 'node:crypto';
+import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import nodemailer from 'nodemailer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load backend/.env explicitly so local runs work no matter which folder starts Node.
+dotenv.config({ path: path.join(__dirname, '.env') });
 const PORT = process.env.PORT || 3001;
 const REPORT_TO_EMAIL = process.env.REPORT_TO_EMAIL || 'puzzlemind89@gmail.com';
 const ADMIN_KEY = process.env.ADMIN_KEY || '';
@@ -22,6 +23,8 @@ const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
 const SMTP_SECURE = process.env.SMTP_SECURE === 'true';
 const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
+const REPORTS_FILE_PATH = path.join(__dirname, 'data', 'reports.json');
+const REVIEWS_FILE_PATH = path.join(__dirname, 'data', 'reviews.json');
 
 let databaseConnectionPromise = null;
 
@@ -109,6 +112,67 @@ async function connectToDatabase() {
   return mongoose.connection;
 }
 
+function isMongoConfigured() {
+  return Boolean(MONGODB_URI);
+}
+
+async function readJsonArray(filePath) {
+  const raw = await readFile(filePath, 'utf8');
+  const parsed = JSON.parse(raw);
+  return Array.isArray(parsed) ? parsed : [];
+}
+
+async function writeJsonArray(filePath, entries) {
+  await writeFile(filePath, `${JSON.stringify(entries, null, 2)}\n`, 'utf8');
+}
+
+async function readFileReports() {
+  return readJsonArray(REPORTS_FILE_PATH);
+}
+
+async function readFileReviews() {
+  return readJsonArray(REVIEWS_FILE_PATH);
+}
+
+async function createFileReport(reportInput) {
+  const reports = await readFileReports();
+  const report = {
+    ...reportInput,
+    id: randomUUID(),
+    createdAt: new Date().toISOString(),
+  };
+
+  reports.unshift(report);
+  await writeJsonArray(REPORTS_FILE_PATH, reports);
+  return report;
+}
+
+async function createFileReview(reviewInput) {
+  const reviews = await readFileReviews();
+  const review = {
+    ...reviewInput,
+    id: randomUUID(),
+    createdAt: new Date().toISOString(),
+  };
+
+  reviews.unshift(review);
+  await writeJsonArray(REVIEWS_FILE_PATH, reviews);
+  return review;
+}
+
+async function deleteFileEntryById(filePath, id) {
+  const entries = await readJsonArray(filePath);
+  const index = entries.findIndex((entry) => String(entry.id) === String(id));
+
+  if (index === -1) {
+    return null;
+  }
+
+  const [deletedEntry] = entries.splice(index, 1);
+  await writeJsonArray(filePath, entries);
+  return deletedEntry;
+}
+
 function normalizeDocument(document) {
   if (!document) {
     return null;
@@ -123,42 +187,77 @@ function normalizeDocument(document) {
 }
 
 async function readReports() {
+  if (!isMongoConfigured()) {
+    return readFileReports();
+  }
+
   await connectToDatabase();
   const reports = await Report.find().sort({ createdAt: -1 }).lean();
   return reports.map(normalizeDocument);
 }
 
 async function readReviews() {
+  if (!isMongoConfigured()) {
+    return readFileReviews();
+  }
+
   await connectToDatabase();
   const reviews = await Review.find().sort({ createdAt: -1 }).lean();
   return reviews.map(normalizeDocument);
 }
 
 async function createReport(reportInput) {
+  if (!isMongoConfigured()) {
+    return createFileReport(reportInput);
+  }
+
   await connectToDatabase();
   const createdReport = await Report.create(reportInput);
   return normalizeDocument(createdReport.toObject());
 }
 
 async function createReview(reviewInput) {
+  if (!isMongoConfigured()) {
+    return createFileReview(reviewInput);
+  }
+
   await connectToDatabase();
   const createdReview = await Review.create(reviewInput);
   return normalizeDocument(createdReview.toObject());
 }
 
 async function deleteReportById(id) {
+  if (!isMongoConfigured()) {
+    return deleteFileEntryById(REPORTS_FILE_PATH, id);
+  }
+
   await connectToDatabase();
   const deletedReport = await Report.findByIdAndDelete(id).lean();
   return normalizeDocument(deletedReport);
 }
 
 async function deleteReviewById(id) {
+  if (!isMongoConfigured()) {
+    return deleteFileEntryById(REVIEWS_FILE_PATH, id);
+  }
+
   await connectToDatabase();
   const deletedReview = await Review.findByIdAndDelete(id).lean();
   return normalizeDocument(deletedReview);
 }
 
 async function getStorageSummary() {
+  if (!isMongoConfigured()) {
+    const [reports, reviews] = await Promise.all([readFileReports(), readFileReviews()]);
+    return {
+      databaseName: 'local-json',
+      reportsCount: reports.length,
+      reviewsCount: reviews.length,
+      provider: 'file',
+      connectionReady: true,
+    };
+  }
+
   await connectToDatabase();
   const [reportsCount, reviewsCount] = await Promise.all([Report.countDocuments(), Review.countDocuments()]);
 
@@ -420,6 +519,16 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === 'GET' && url.pathname === '/api/reviews') {
+    try {
+      const reviews = await readReviews();
+      sendJson(res, 200, { reviews });
+    } catch (error) {
+      sendJson(res, 500, { message: 'Unable to load reviews.', error: error.message });
+    }
+    return;
+  }
+
   if (req.method === 'GET' && url.pathname === '/api/admin/submissions') {
     if (!(await requireAdmin(req, res))) {
       return;
@@ -486,10 +595,16 @@ const server = createServer(async (req, res) => {
 
       const newReview = await createReview(validated.value);
 
-      const email = await sendMail({
-        subject: `New customer review (${newReview.reviewRating}/5)`,
-        text: formatReviewEmail(newReview),
-      });
+      let email;
+      try {
+        email = await sendMail({
+          subject: `New customer review (${newReview.reviewRating}/5)`,
+          text: formatReviewEmail(newReview),
+        });
+      } catch (error) {
+        console.error('Review notification email failed:', error);
+        email = { sent: false, error: 'Email delivery failed after review was saved.' };
+      }
 
       sendJson(res, 201, {
         message: 'Review submitted successfully.',

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { buildApiUrl, parseApiResponse } from '../lib/api';
 
 const BRAND_NAME = 'BitAudit Forensics';
@@ -45,6 +45,9 @@ function PlatformForm() {
   const [reportSubmitted, setReportSubmitted] = useState(false);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [isDraggingScreenshot, setIsDraggingScreenshot] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(true);
+  const [reviewsErrorMessage, setReviewsErrorMessage] = useState('');
 
   const handleReportChange = (event) => {
     const { name, value } = event.target;
@@ -109,6 +112,49 @@ function PlatformForm() {
     setShowDisclaimer(false);
   };
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadReviews = async () => {
+      setIsLoadingReviews(true);
+      setReviewsErrorMessage('');
+
+      try {
+        const response = await fetch(buildApiUrl('/api/reviews'));
+        const data = await parseApiResponse(response);
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Failed to load reviews.');
+        }
+
+        if (isMounted) {
+          setReviews(Array.isArray(data.reviews) ? data.reviews : []);
+        }
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setReviews([]);
+        if (error instanceof TypeError) {
+          setReviewsErrorMessage('Could not load reviews right now. Start the backend server and try again.');
+        } else {
+          setReviewsErrorMessage(error.message || 'Failed to load reviews.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingReviews(false);
+        }
+      }
+    };
+
+    loadReviews();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const handleReportSubmit = async (event) => {
     event.preventDefault();
     setIsSubmittingReport(true);
@@ -169,6 +215,7 @@ function PlatformForm() {
       }
 
       setReviewSubmitted(true);
+      setReviews((prev) => [data.review, ...prev.filter((review) => review.id !== data.review?.id)]);
       setReviewData({
         reviewRating: 0,
         reviewComment: '',
@@ -379,6 +426,37 @@ function PlatformForm() {
           </div>
         )}
       </form>
+      <div className="submitted-reviews">
+        <div className="section-header review-section-header">
+          <span>Client Reviews</span>
+          <h2>Submitted reviews will appear here</h2>
+        </div>
+        {isLoadingReviews ? (
+          <div className="form-message">Loading reviews...</div>
+        ) : reviewsErrorMessage ? (
+          <div className="form-message error">{reviewsErrorMessage}</div>
+        ) : reviews.length === 0 ? (
+          <div className="review-empty-state">
+            No reviews yet. Be the first to leave one.
+          </div>
+        ) : (
+          <div className="review-list">
+            {reviews.map((review) => (
+              <article key={review.id} className="review-card">
+                <div className="review-card-header">
+                  <strong>{'★'.repeat(review.reviewRating)}</strong>
+                  <span className="review-time">
+                    {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : 'Recently submitted'}
+                  </span>
+                </div>
+                <p>
+                  {review.reviewComment || 'No written comment was provided for this review.'}
+                </p>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
     </section>
   );
 }

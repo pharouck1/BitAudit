@@ -9,7 +9,7 @@ function Contact() {
         <p>If you need help recovering crypto or want to report a scam, reach out to our experts.</p>
         <ul className="contact-list">
           <li><strong>Online report:</strong> <a href="/report">Submit incident details</a></li>
-          
+          <li><strong>Email:</strong> <a href="mailto:bitauditforensics@gmail.com">bitauditforensics@gmail.com</a></li>
         </ul>
         <p>Your report details will be reviewed by our team and we will follow up right away.</p>
         <p>We respond quickly to new reports and provide guidance for securing your digital assets.</p>
